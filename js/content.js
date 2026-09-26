@@ -12,8 +12,10 @@ export const CONTENT = Object.freeze({
     links: [
       { label: 'GitHub', href: 'https://github.com/gauresh99', kind: 'github' },
       { label: 'LinkedIn', href: 'https://linkedin.com/in/gauresh-maheshwary19', kind: 'linkedin' },
-      { label: 'Email', href: 'mailto:gaureshmaheshwary@gmail.com', kind: 'email' },
-      { label: 'UIUC', href: 'mailto:gauresh2@illinois.edu', kind: 'email' },
+      // Both are email. "UIUC" on its own read as a university link rather
+      // than an address, so each label says which inbox it opens.
+      { label: 'Gmail', href: 'mailto:gaureshmaheshwary@gmail.com', kind: 'email' },
+      { label: 'UIUC email', href: 'mailto:gauresh2@illinois.edu', kind: 'email' },
     ],
   },
 
