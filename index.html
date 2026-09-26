@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gauresh Maheshwary — embedded firmware and deployable ML</title>
+<meta name="description" content="Computer Engineering at UIUC. Embedded firmware first, applied machine learning for constrained hardware second.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f5f7f3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#07100c" media="(prefers-color-scheme: dark)">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
+<!-- CSP fallback for hosts that cannot set HTTP headers — GitHub Pages being
+     the one that matters here. Where headers ARE available (Netlify, Cloudflare
+     Pages, Vercel) public/_headers wins and this is redundant but harmless.
+
+     A meta CSP cannot express frame-ancestors, report-uri or sandbox; browsers
+     ignore them here. So on GitHub Pages this page gets everything below but NO
+     clickjacking protection, because that needs frame-ancestors or
+     X-Frame-Options and both are headers. If that matters, host it somewhere
+     that sets headers. Keep this in sync with public/_headers. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'self'; base-uri 'none'; form-action 'none'; require-trusted-types-for 'script'; trusted-types 'none'; upgrade-insecure-requests">
+
+<!-- Same-origin only. No CDN, no font service, no analytics, no icon pack.
+     Every byte this page loads is served from this origin, which is what makes
+     a restrictive CSP possible rather than aspirational. -->
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/site.css">
+</head>
+<body>
+
+<a class="skip-link" id="skip-link" href="#app-root">Skip to content</a>
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="wordmark" href="#app-root">
+      <span class="wordmark__mark" aria-hidden="true">GM</span>
+      <span class="wordmark__text">Gauresh Maheshwary</span>
+    </a>
+
+    <!-- Visitor count, worn as a squad number. PRESENTATION ONLY: the slot is
+         empty and invisible until js/site.js has a real number from
+         js/visitors.js, and stays empty and invisible forever if it never
+         gets one. Its width and height are fixed in CSS in every state, so
+         the header does not reflow either way. No zero, no placeholder, no
+         spinner — see the .player-number block in css/base.css. -->
+    <!-- Light / dark. Separate from the play/read switch: one chooses what you
+         are looking at, the other how it is lit. -->
+    <div class="theme-toggle" id="theme-toggle" role="group" aria-label="Colour theme">
+      <button class="theme-toggle__opt" type="button" data-theme-set="light" aria-pressed="false">Light</button>
+      <button class="theme-toggle__opt" type="button" data-theme-set="dark" aria-pressed="false">Dark</button>
+    </div>
+
+    <div class="mode-switch">
+      <!-- Always names the mode you are NOT in, so the round trip is obvious
+           in both directions. Hidden from assistive technology because the
+           button below already carries the same thing as a real toggle state;
+           both lines stay hidden until main.js sets html[data-mode]. -->
+      <p class="mode-cue" aria-hidden="true">
+        <span class="mode-cue__line mode-cue__line--play">Fancy a penalty?</span>
+        <span class="mode-cue__line mode-cue__line--read">Rather just read?</span>
+      </p>
+
+      <!-- aria-pressed is owned and maintained by js/main.js. Everything visual
+           here is driven off that attribute, so the switch cannot drift out of
+           sync with the mode it reports to assistive technology. -->
+      <button
+        class="mode-toggle"
+        id="mode-toggle"
+        type="button"
+        aria-pressed="false"
+        aria-label="Shootout mode">
+        <span class="mode-toggle__knob" aria-hidden="true"></span>
+        <span class="mode-toggle__opt mode-toggle__opt--site">
+          <span class="mode-toggle__dot" aria-hidden="true"></span>Read
+        </span>
+        <span class="mode-toggle__opt mode-toggle__opt--play">
+          <span class="mode-toggle__dot" aria-hidden="true"></span>Play
+        </span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Polite, so an announcement never interrupts what a screen reader is
+     already saying. Game reveals and mode changes both route through here. -->
+<div id="a11y-live" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+
+<main id="app-root" tabindex="-1">
+  <!-- Replaced by main.js on mount. If it is still here, scripts are off or
+       the module graph failed, so it carries the three things worth having. -->
+  <div class="boot-note">
+    <p><strong>Gauresh Maheshwary</strong> — Computer Engineering, UIUC.</p>
+    <p>This site renders with JavaScript. With it off, here is the short version:</p>
+    <ul>
+      <li><a href="mailto:gauresh2@illinois.edu">gauresh2@illinois.edu</a></li>
+      <li><a href="https://github.com/gauresh99" rel="noopener noreferrer">github.com/gauresh99</a></li>
+      <li><a href="https://linkedin.com/in/gauresh-maheshwary19" rel="noopener noreferrer">linkedin.com/in/gauresh-maheshwary19</a></li>
+    </ul>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap site-footer__inner">
+    <p>Built as a static site — no server, no database, no third-party requests.</p>
+    <p><a href="#skip-link">Back to top</a></p>
+  </div>
+</footer>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

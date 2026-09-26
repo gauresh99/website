@@ -1,0 +1,13 @@
+.DS_Store
+.claude/
+.github/
+dist/
+test/
+*.md
+check.mjs
+devserver.py
+assets/gauresh@2x.jpg
+assets/pong.jpg
+assets/sakha-circuit.jpg
+assets/sakha.jpg.jpg
+assets/uiuc.jpg

@@ -1,0 +1,58 @@
+# Netlify deployment. The build command creates an allowlisted dist/ tree so
+# local tooling, tests, notes and raw source assets cannot be deployed by
+# accident. Headers are declared HERE as well as copied to dist/_headers:
+# netlify.toml is publish-directory independent, while `_headers` also covers
+# hosts that read it from the publish root.
+#
+# scripts/build-site.mjs copies public/_headers into dist/_headers so a
+# Cloudflare Pages or Netlify-without-toml deploy of dist still gets the policy.
+#
+# Every directive is justified in SECURITY.md.
+
+[build]
+  publish = "dist"
+  command = "node scripts/build-site.mjs"
+
+[[headers]]
+  for = "/*"
+
+  [headers.values]
+    Content-Security-Policy = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; require-trusted-types-for 'script'; trusted-types 'none'; upgrade-insecure-requests"
+    Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    Permissions-Policy = "accelerometer=(), ambient-light-sensor=(), attribution-reporting=(), autoplay=(), bluetooth=(), browsing-topics=(), camera=(), display-capture=(), encrypted-media=(), fullscreen=(self), gamepad=(), geolocation=(), gyroscope=(), hid=(), identity-credentials-get=(), idle-detection=(), interest-cohort=(), local-fonts=(), magnetometer=(), microphone=(), midi=(), otp-credentials=(), payment=(), picture-in-picture=(), publickey-credentials-create=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), storage-access=(), usb=(), window-management=(), xr-spatial-tracking=()"
+    X-Frame-Options = "DENY"
+    Cross-Origin-Opener-Policy = "same-origin"
+    Cross-Origin-Resource-Policy = "same-origin"
+    # The legacy XSS Auditor is removed from every current browser and its
+    # filtering mode was itself exploitable. 0 explicitly disables it; this is
+    # the only correct value, and omitting the header is not the same thing on
+    # older engines that defaulted it on.
+    X-XSS-Protection = "0"
+
+# A security fix must never sit behind a stale HTML cache.
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=3600, must-revalidate"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=3600, must-revalidate"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400, must-revalidate"

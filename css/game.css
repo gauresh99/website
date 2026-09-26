@@ -1,0 +1,940 @@
+/* =============================================================================
+   game.css — the shootout HUD.
+
+   Loaded by js/game/index.js rather than by index.html, because the game is
+   imported on demand and its stylesheet should arrive with it. A same-origin
+   <link> is also the only thing the deployed CSP permits: `style-src 'self'`
+   rejects an inline <style> element, so this file cannot be inlined even if
+   that were desirable.
+
+   THREE THINGS THIS FILE IS RESPONSIBLE FOR
+
+   1. THE CANVAS PALETTE. js/game/renderer.js reads --gm-* off the .gm-root
+      element with getComputedStyle and paints the pitch with whatever it
+      finds, falling back to a hardcoded palette if the properties are absent.
+      Defining them here is what makes the canvas follow the design system
+      instead of ignoring it. Every value resolves to one of tokens.css's raw
+      ramps, never to a semantic token, for one specific reason: semantic
+      tokens in this system are built with color-mix(), and an unregistered
+      custom property's computed value keeps color-mix() unresolved. The canvas
+      would be handed the literal string. Ramps are plain hex and survive the
+      trip.
+
+   2. THE OVERLAY. Everything readable in game mode is DOM on top of the
+      canvas, so this file positions it, and does so with pointer-events: none
+      on the wrapper — otherwise the HUD would swallow the mouse aim it exists
+      to describe.
+
+   3. CONTRAST AGAINST A PITCH, NOT AGAINST THE PAGE. The bar and the control
+      deck sit on grass in both colour schemes, so they carry their own dark
+      scrim and light type in both. The reveal and summary panels do the
+      opposite: they are page surfaces holding a .proj-card, so they use the
+      page's own semantic tokens and let site.css typeset the card exactly as
+      it does in the written version.
+   ========================================================================== */
+
+/* The HUD toggles its panels with the `hidden` property, and the rules below
+   set `display` on those same elements, which would beat the UA's
+   `[hidden] { display: none }`.
+   Scoped to this game's own subtree rather than written as a bare `[hidden]`:
+   this stylesheet stays in the document after the game unmounts, and a global
+   !important rule shipped from here would quietly constrain every other
+   agent's CSS for the rest of the session. */
+.gm-root [hidden] { display: none !important; }
+
+/* =============================================================================
+   1. CANVAS PALETTE — read by renderer.js
+   ========================================================================== */
+
+.gm-root {
+  /* Day match: pale teal overhead washing out towards the horizon. */
+  --gm-sky1: var(--dial-300);
+  --gm-sky2: var(--dial-100);
+
+  /* Mow stripes alternate turf1/turf2 over a turfFar base. */
+  --gm-turf1: var(--pitch-400);
+  --gm-turf2: var(--pitch-500);
+  --gm-turfFar: var(--pitch-600);
+
+  --gm-line: var(--chalk-0);
+  --gm-net: var(--chalk-100);
+  --gm-post: var(--chalk-0);
+
+  --gm-ball: var(--chalk-0);
+  --gm-ballDark: var(--pitch-950);
+
+  --gm-keeper: var(--flare-500);
+  --gm-keeperAlt: var(--flare-700);
+  --gm-glove: var(--dial-700);
+
+  --gm-accent: var(--flare-500);
+  --gm-accentAlt: var(--beam-300);
+  /* Amber on bright grass needs the darker step to stay visible. */
+  --gm-reticle: var(--beam-500);
+  --gm-shadow: var(--pitch-950);
+  --gm-flash: var(--chalk-0);
+
+  /* Confetti slots, one per category colour in the system. */
+  --gm-c1: var(--flare-500);
+  --gm-c2: var(--beam-300);
+  --gm-c3: var(--pitch-300);
+  --gm-c4: var(--dial-300);
+
+  /* HUD chrome. Fixed against the pitch in both schemes. */
+  --gm-scrim: color-mix(in oklab, var(--pitch-950) 78%, transparent);
+  --gm-scrim-soft: color-mix(in oklab, var(--pitch-950) 58%, transparent);
+  --gm-chrome-ink: var(--chalk-0);
+  --gm-chrome-muted: var(--pitch-100);
+  --gm-chrome-edge: color-mix(in oklab, var(--chalk-0) 22%, transparent);
+}
+
+/* Night match. Guarded exactly as tokens.css guards its dark block, so an
+   explicit light choice still wins. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .gm-root {
+    --gm-sky1: var(--pitch-950);
+    --gm-sky2: var(--pitch-800);
+
+    --gm-turf1: var(--pitch-600);
+    --gm-turf2: var(--pitch-700);
+    --gm-turfFar: var(--pitch-800);
+
+    --gm-line: var(--chalk-100);
+    --gm-net: var(--chalk-300);
+    --gm-post: var(--chalk-50);
+
+    --gm-keeper: var(--flare-400);
+    --gm-keeperAlt: var(--flare-600);
+    --gm-glove: var(--dial-600);
+
+    --gm-accent: var(--flare-400);
+    --gm-reticle: var(--beam-300);
+
+    --gm-c1: var(--flare-400);
+    --gm-c3: var(--pitch-300);
+  }
+}
+
+/* =============================================================================
+   2. STAGE
+   ========================================================================== */
+
+.gm-root {
+  position: relative;
+  /* dvh rather than vh: on a phone the URL bar collapses mid-scroll and vh
+     would leave the pitch cropped or the deck under the chrome. */
+  height: calc(100dvh - var(--header-h));
+  /* Low enough that a phone in landscape does not get a stage taller than its
+     own viewport — a min-height above the available height is how you turn a
+     full-bleed stage into a page that scrolls for no reason. */
+  min-height: 18rem;
+  overflow: clip;
+  isolation: isolate;
+  /* Painted before the canvas acquires a context, and behind it forever after,
+     so there is never a flash of page background inside the stage. */
+  background: var(--pitch-800);
+  touch-action: manipulation;
+}
+
+.gm-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* The pitch is the aim surface: a drag across it is aiming, not scrolling. */
+  touch-action: none;
+  cursor: crosshair;
+}
+
+/*
+ * Flex column with space-between, not a three-row grid.
+ *
+ * The grid version put the bar in row 1 and the deck in row 2 — the `1fr` row
+ * — because the two panels are absolutely positioned and `hidden`, so they are
+ * not in flow and there was no third in-flow child to occupy the last row. The
+ * deck stretched to fill the free space and buried the pitch under a control
+ * panel four times its own content height. Space-between has no empty-track to
+ * fall into: the bar is first, the deck is last, and the gap between them is
+ * whatever is left.
+ */
+.gm-hud {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  /* The wrapper must not eat pointer events or mouse aiming would only work in
+     the gaps between controls. Every interactive child opts back in. */
+  pointer-events: none;
+  font-family: var(--font-body);
+}
+
+.gm-hud > * { min-width: 0; flex: none; }
+
+/* =============================================================================
+   3. SCOREBOARD BAR
+   ========================================================================== */
+
+.gm-hud__bar {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  padding: var(--sp-4) var(--gutter);
+  background: linear-gradient(var(--gm-scrim), transparent);
+  color: var(--gm-chrome-ink);
+}
+
+.gm-board {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+  padding: var(--sp-3) var(--sp-5);
+  border: 1px solid var(--gm-chrome-edge);
+  border-radius: var(--radius-pill);
+  background: var(--gm-scrim);
+  box-shadow: var(--shadow-2);
+}
+
+.gm-board__stat {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  margin: 0;
+}
+
+.gm-board__label {
+  font-family: var(--font-display);
+  font-size: var(--step--2);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+  color: var(--gm-chrome-muted);
+}
+
+.gm-board__figure {
+  font-family: var(--font-mono);
+  font-size: var(--step-1);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-flat);
+  font-variant-numeric: tabular-nums;
+}
+
+.gm-board__sep { opacity: 0.45; margin-inline: 0.15em; }
+.gm-board__stat--score .gm-board__value { color: var(--beam-300); }
+
+/* Five pips, one per penalty. The scoreboard of a shootout is the row of
+   marks, so it is a list and it carries its own text for a screen reader. */
+.gm-board__pips {
+  display: flex;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gm-board__pip {
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: var(--radius-xs);
+  border: 1.5px solid var(--gm-chrome-edge);
+  background: transparent;
+  transition: background-color var(--dur-2) var(--ease-out),
+              border-color var(--dur-2) var(--ease-out),
+              transform var(--dur-2) var(--ease-emphatic);
+}
+
+.gm-board__pip[data-state="goal"] {
+  background: var(--beam-300);
+  border-color: var(--beam-300);
+}
+.gm-board__pip[data-state="save"],
+.gm-board__pip[data-state="miss"] {
+  background: color-mix(in oklab, var(--chalk-0) 22%, transparent);
+  border-color: color-mix(in oklab, var(--chalk-0) 38%, transparent);
+}
+/* Revealed without a shot: present, counted, but claiming nothing either way. */
+.gm-board__pip[data-state="skipped"] {
+  border-style: dashed;
+  border-color: color-mix(in oklab, var(--chalk-0) 52%, transparent);
+}
+.gm-board__pip[data-current="true"] {
+  border-color: var(--flare-400);
+  transform: scale(calc(1 + 0.12 * var(--motion-ok)));
+}
+
+/* The way out. Never hidden, never disabled, never moved. */
+.gm-skip {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
+  padding: var(--sp-3) var(--sp-6);
+  border: 1px solid var(--gm-chrome-edge);
+  border-radius: var(--radius-pill);
+  background: var(--gm-scrim);
+  color: var(--gm-chrome-ink);
+  font-family: var(--font-display);
+  font-size: var(--step--1);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: var(--shadow-2);
+  transition: background-color var(--dur-1) var(--ease-out),
+              border-color var(--dur-1) var(--ease-out);
+}
+.gm-skip:hover {
+  background: var(--flare-700);
+  border-color: var(--flare-500);
+}
+
+/* =============================================================================
+   4. CONTROL DECK
+   ========================================================================== */
+
+.gm-hud__deck {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-5) var(--gutter) var(--sp-6);
+  background: linear-gradient(transparent, var(--gm-scrim) 38%);
+  color: var(--gm-chrome-ink);
+}
+
+.gm-commentary {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  margin: 0;
+  min-height: 2rem;
+  font-size: var(--step-0);
+  color: var(--gm-chrome-ink);
+  text-shadow: 0 1px 3px rgba(3, 24, 15, 0.8);
+}
+
+.gm-commentary__badge {
+  flex: none;
+  padding: 0.15em 0.75em;
+  border-radius: var(--radius-pill);
+  background: var(--chalk-0);
+  color: var(--pitch-950);
+  font-family: var(--font-display);
+  font-size: var(--step--1);
+  font-weight: var(--weight-black);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  text-shadow: none;
+}
+.gm-commentary[data-state="goal"] .gm-commentary__badge {
+  background: var(--beam-300);
+  color: var(--pitch-950);
+}
+.gm-commentary[data-state="saved"] .gm-commentary__badge {
+  background: var(--dial-300);
+  color: var(--pitch-950);
+}
+
+.gm-controls {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: var(--sp-5) var(--sp-7);
+}
+
+/* --- aim ------------------------------------------------------------------ */
+
+.gm-aim {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.gm-aim__readout {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  margin: 0;
+}
+.gm-aim__readout-label {
+  font-family: var(--font-display);
+  font-size: var(--step--2);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+  color: var(--gm-chrome-muted);
+}
+.gm-aim__readout-value {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  color: var(--gm-chrome-ink);
+}
+
+/* The nine zones are the keyboard path made visible: the digit on each button
+   is the key that selects it, so the mouse affordance teaches the shortcut. */
+.gm-aim__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 2.35rem);
+  grid-template-rows: repeat(3, 1.85rem);
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid var(--gm-chrome-edge);
+  border-radius: var(--radius-sm);
+  background: var(--gm-scrim);
+}
+
+.gm-aim__zone {
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: color-mix(in oklab, var(--chalk-0) 10%, transparent);
+  color: var(--gm-chrome-muted);
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  cursor: pointer;
+  transition: background-color var(--dur-1) var(--ease-out),
+              color var(--dur-1) var(--ease-out);
+}
+.gm-aim__zone:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--chalk-0) 26%, transparent);
+  color: var(--chalk-0);
+}
+/* Where the reticle actually is, which may be nowhere near a zone centre. A
+   hint, not a claim about state — hence no aria-pressed on these buttons. */
+.gm-aim__zone[data-near="true"] {
+  background: var(--flare-600);
+  color: var(--chalk-0);
+}
+.gm-aim__zone:disabled { opacity: 0.4; cursor: default; }
+
+/* --- power ---------------------------------------------------------------- */
+
+.gm-power {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 11rem;
+  flex: 1 1 11rem;
+  max-width: 20rem;
+}
+
+.gm-power__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+.gm-power__label {
+  font-family: var(--font-display);
+  font-size: var(--step--2);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+  color: var(--gm-chrome-muted);
+}
+.gm-power__value {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  font-variant-numeric: tabular-nums;
+  color: var(--beam-300);
+}
+
+/* A native range input, styled but not reimplemented: it keeps its keyboard
+   behaviour, its touch target and its screen-reader semantics. */
+.gm-power__input {
+  width: 100%;
+  height: 1.5rem;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  accent-color: var(--flare-500);
+}
+.gm-power__input:disabled { opacity: 0.45; cursor: default; }
+
+.gm-power__note {
+  margin: 0;
+  font-size: var(--step--2);
+  color: var(--gm-chrome-muted);
+}
+
+/* --- shoot ---------------------------------------------------------------- */
+
+.gm-shoot {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 3rem;
+  padding: var(--sp-4) var(--sp-8);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--flare-500);
+  color: var(--chalk-0);
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+  font-weight: var(--weight-black);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: var(--shadow-2);
+  transition: transform var(--dur-1) var(--ease-out),
+              background-color var(--dur-1) var(--ease-out);
+}
+.gm-shoot:hover:not(:disabled) { background: var(--flare-400); }
+.gm-shoot:active:not(:disabled) { transform: translateY(calc(1px * var(--motion-ok))); }
+.gm-shoot:disabled { opacity: 0.45; cursor: default; }
+
+.gm-shoot__key {
+  padding: 0.1em 0.5em;
+  border: 1px solid color-mix(in oklab, var(--chalk-0) 45%, transparent);
+  border-radius: var(--radius-xs);
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  font-weight: var(--weight-regular);
+  letter-spacing: var(--tracking-normal);
+  text-transform: none;
+}
+
+/* =============================================================================
+   5. PANELS — reveal and summary
+
+   These are page surfaces, not pitch chrome: they hold a .proj-card, and that
+   card is typeset by css/site.css against the page's own semantic tokens. Any
+   scrim of our own here would put the card on a background site.css never
+   designed it for.
+   ========================================================================== */
+
+.gm-panel {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-raised);
+  pointer-events: auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  padding: var(--sp-7) var(--gutter) var(--sp-9);
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.gm-panel__foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  margin-top: auto;
+  padding-top: var(--sp-5);
+}
+
+.gm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: var(--sp-4) var(--sp-7);
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-size: var(--step-0);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color var(--dur-1) var(--ease-out),
+              border-color var(--dur-1) var(--ease-out);
+}
+.gm-btn--go {
+  background: var(--brand);
+  color: var(--brand-on);
+  box-shadow: var(--shadow-1);
+}
+.gm-btn--go:hover { background: var(--brand-strong); }
+.gm-btn--quiet {
+  background: transparent;
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+.gm-btn--quiet:hover {
+  border-color: var(--brand);
+  color: var(--brand-ink);
+  background: var(--brand-tint);
+}
+
+/* --- the ribbon ----------------------------------------------------------- */
+
+.gm-reveal__ribbon {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  margin: 0;
+}
+
+.gm-reveal__outcome {
+  padding: 0.2em 0.9em;
+  border-radius: var(--radius-pill);
+  background: var(--chalk-300);
+  color: var(--pitch-950);
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+  font-weight: var(--weight-black);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+.gm-reveal__line {
+  color: var(--ink-muted);
+  font-size: var(--step-0);
+}
+
+/* A goal is the only state that gets colour and scale. The other states are
+   not failures — they reveal exactly the same card — so they are quiet rather
+   than negative. Nothing here is red. */
+.gm-panel--reveal[data-outcome="goal"] .gm-reveal__outcome {
+  background: var(--signal);
+  color: var(--signal-on);
+  box-shadow: 0 0 0 4px var(--glow-signal);
+}
+.gm-panel--reveal[data-outcome="save"] .gm-reveal__outcome { background: var(--info-tint); color: var(--info-ink); }
+.gm-panel--reveal[data-outcome="miss"] .gm-reveal__outcome { background: var(--surface-3); color: var(--ink-muted); }
+.gm-panel--reveal[data-outcome="skipped"] .gm-reveal__outcome { background: var(--surface-3); color: var(--ink-muted); }
+
+.gm-reveal__card { max-width: var(--wrap-narrow); width: 100%; }
+
+/* The payoff. content.js gives every project a `highlight` — the one detail an
+   interviewer would dig into — and on a goal that block is the thing the whole
+   round was for, so it is lifted rather than left as one more paragraph. */
+.gm-panel--reveal[data-outcome="goal"] .proj-card__highlight {
+  border-color: var(--signal);
+  box-shadow: 0 0 0 1px var(--signal), 0 0 32px -6px var(--glow-signal);
+}
+.gm-panel--reveal[data-outcome="goal"] .proj-card__hl-label { color: var(--signal-ink); }
+
+/* --- summary -------------------------------------------------------------- */
+
+.gm-summary__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--step-4);
+  letter-spacing: var(--tracking-tighter);
+  text-transform: uppercase;
+}
+
+.gm-summary__score {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  margin: 0;
+}
+.gm-summary__figure {
+  font-family: var(--font-display);
+  font-size: var(--step-6);
+  font-weight: var(--weight-black);
+  line-height: var(--leading-flat);
+  color: var(--accent-ink);
+}
+.gm-summary__of { color: var(--ink-muted); font-size: var(--step-1); }
+
+.gm-summary__note {
+  margin: 0;
+  max-width: var(--measure);
+  color: var(--ink-muted);
+}
+
+.gm-summary__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  width: 100%;
+  max-width: var(--wrap-narrow);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Every project reachable again by name, so full time is a table of contents
+   rather than a dead end. */
+.gm-summary__jump {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  width: 100%;
+  min-height: 3rem;
+  padding: var(--sp-4) var(--sp-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--dur-1) var(--ease-out),
+              background-color var(--dur-1) var(--ease-out);
+}
+.gm-summary__jump:hover {
+  border-color: var(--brand);
+  background: var(--brand-tint);
+}
+.gm-summary__num {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  color: var(--ink-faint);
+}
+.gm-summary__name {
+  flex: 1;
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+  font-weight: var(--weight-bold);
+}
+.gm-summary__mark {
+  font-family: var(--font-display);
+  font-size: var(--step--1);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+.gm-summary__mark[data-state="goal"] { color: var(--signal-ink); }
+
+/* =============================================================================
+   6. NARROW SCREENS
+   ========================================================================== */
+
+@media (max-width: 34rem) {
+  .gm-hud__bar {
+    padding-inline: var(--sp-5);
+    gap: var(--sp-3);
+  }
+  .gm-board { gap: var(--sp-4); padding-inline: var(--sp-4); }
+  /* The round counter and the pips say the same thing; on a phone the pips
+     alone are enough and the counter is the one that goes. */
+  .gm-board__stat:not(.gm-board__stat--score) .gm-board__label { display: none; }
+  .gm-skip { font-size: var(--step--2); padding-inline: var(--sp-5); }
+
+  .gm-hud__deck { padding-inline: var(--sp-5); }
+  .gm-controls { gap: var(--sp-4); }
+  .gm-power { order: 3; flex-basis: 100%; max-width: none; }
+  .gm-shoot { flex: 1; justify-content: center; }
+  .gm-shoot__key { display: none; }
+
+  .gm-panel { padding-inline: var(--sp-5); }
+}
+
+/* Short viewports — a phone in landscape. The deck compresses before the pitch
+   does, because a pitch with no room to see the goal is not worth aiming at. */
+@media (max-height: 34rem) {
+  .gm-power__note { display: none; }
+  .gm-aim__grid { grid-template-rows: repeat(3, 1.45rem); }
+  .gm-hud__deck { padding-block: var(--sp-3) var(--sp-4); gap: var(--sp-2); }
+  /* The aim readout moves alongside its grid rather than above it, which is
+     the cheapest row of vertical space in the deck to buy back. */
+  .gm-aim { flex-direction: row-reverse; align-items: center; gap: var(--sp-4); }
+  .gm-commentary { min-height: 1.5rem; font-size: var(--step--1); }
+}
+
+/* A phone held sideways: short AND narrow at once, where the two sets of rules
+   above would otherwise stack — the narrow rules give power its own full-width
+   row just as the short rules are trying to buy rows back. Everything goes on
+   one line and the type steps down, because the alternative is a bar and a
+   deck that meet in the middle with no pitch between them. */
+@media (max-width: 34rem) and (max-height: 34rem) {
+  .gm-power { order: 0; flex: 1 1 7rem; max-width: 12rem; }
+  .gm-shoot {
+    flex: 0 1 auto;
+    min-height: 2.5rem;
+    padding-inline: var(--sp-5);
+    font-size: var(--step-0);
+  }
+  .gm-skip { font-size: var(--step--2); padding: var(--sp-2) var(--sp-4); min-height: 2rem; }
+  .gm-aim__readout-label { display: none; }
+  .gm-board { padding-block: var(--sp-2); }
+}
+
+/* =============================================================================
+   7. REDUCED MOTION
+
+   The scene layer has already removed the motion itself — no flight, no
+   particles, no shake, and the canvas repaints only on input. What is left
+   here is the CSS half: no transitions, no entrances. --motion-ok is already 0
+   under this query (tokens.css), so the transform-based rules above have
+   stopped travelling; these rules stop the fades and the card flip as well.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .gm-board__pip,
+  .gm-skip,
+  .gm-shoot,
+  .gm-aim__zone,
+  .gm-btn,
+  .gm-summary__jump {
+    transition: none;
+  }
+  .gm-panel--reveal .proj-card { animation: none; }
+}
+
+/* The same, driven by the scene rather than by the media query, so a visitor
+   who turns the setting on mid-game gets the change immediately instead of on
+   the next mount. */
+.gm-root[data-motion="still"] .gm-board__pip,
+.gm-root[data-motion="still"] .gm-skip,
+.gm-root[data-motion="still"] .gm-shoot,
+.gm-root[data-motion="still"] .gm-aim__zone,
+.gm-root[data-motion="still"] .gm-btn,
+.gm-root[data-motion="still"] .gm-summary__jump {
+  transition: none;
+}
+.gm-root[data-motion="still"] .proj-card { animation: none; }
+
+/* Retry panel: shown when the keeper wins. No project, just another go. */
+.gm-retry { padding: clamp(1.25rem, 3vw, 2rem) 0; text-align: center; }
+.gm-retry__lead {
+  margin: 0 0 0.5rem;
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 800;
+}
+.gm-retry__sub {
+  margin: 0; font-size: clamp(1rem, 1.6vw, 1.15rem);
+  opacity: 0.8; line-height: 1.6;
+}
+
+/* Big white call-out over the pitch. Purely a message line: it never takes
+   pointer events, so it cannot sit between the player and the goal. */
+.gm-banner {
+  margin: 0;
+  padding: clamp(0.5rem, 1.6vw, 1rem) 1rem 0;
+  text-align: center;
+  pointer-events: none;
+  font-weight: 900;
+  line-height: 1.1;
+  font-size: clamp(1.5rem, 4.2vw, 3.2rem);
+  color: #fff;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.28), 0 10px 26px rgba(0, 0, 0, 0.45);
+  letter-spacing: -0.01em;
+}
+.gm-banner[data-tone="goal"] { color: #eaffef; }
+.gm-banner[data-tone="save"] { color: #fff3d6; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .gm-banner__text {
+    display: inline-block;
+    animation: gm-banner-in 260ms cubic-bezier(.34, 1.4, .64, 1);
+  }
+  @keyframes gm-banner-in {
+    from { transform: translateY(-8px) scale(0.96); opacity: 0; }
+    to   { transform: none; opacity: 1; }
+  }
+}
+
+/* The banner was sitting across the goal mouth, over the target panels — the
+   one place on the pitch where something needs to stay readable. It moves down
+   onto the empty grass between the six-yard box and the penalty spot. */
+.gm-banner {
+  position: absolute;
+  left: 0; right: 0;
+  top: 58%;
+  padding: 0 1rem;
+  z-index: 2;
+}
+
+@media (max-width: 720px) { .gm-banner { top: 54%; font-size: clamp(1.2rem, 6vw, 2rem); } }
+
+/* --- reveal: card left, player right ------------------------------------- */
+
+.gm-reveal__stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(180px, 26%, 320px);
+  gap: clamp(1rem, 3vw, 2.5rem);
+  align-items: center;
+}
+@media (max-width: 860px) {
+  .gm-reveal__stage { grid-template-columns: 1fr; }
+  .gm-reveal__player { display: none; }
+}
+
+/* Bigger reading size inside the reveal — it is the whole point of the panel. */
+.gm-panel--reveal .proj-card__name { font-size: clamp(1.5rem, 3vw, 2.2rem); }
+.gm-panel--reveal .proj-card__body p,
+.gm-panel--reveal .proj-card__points li {
+  font-size: clamp(1.05rem, 1.4vw, 1.2rem);
+  line-height: 1.75;
+}
+
+/* The celebrating player, filling the space the card leaves. */
+.gm-reveal__player { display: grid; place-items: center; }
+.gm-reveal__player svg { width: 100%; height: auto; max-width: 300px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .gm-player__leg-kick { transform-origin: 50px 62px; animation: gm-kick 1.6s ease-in-out infinite; }
+  .gm-player__ball { animation: gm-ball 1.6s ease-in-out infinite; }
+  @keyframes gm-kick {
+    0%, 60%, 100% { transform: rotate(0deg); }
+    72% { transform: rotate(-26deg); }
+  }
+  @keyframes gm-ball {
+    0%, 60%, 100% { transform: translate(0, 0) rotate(0deg); }
+    72% { transform: translate(6px, -10px) rotate(90deg); }
+    86% { transform: translate(2px, -3px) rotate(180deg); }
+  }
+}
+
+/* Reveal player: bigger and centred in its column, with the caption under it. */
+.gm-reveal__stage { grid-template-columns: minmax(0, 1fr) clamp(220px, 32%, 400px); }
+.gm-reveal__player {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.75rem;
+  --player-kit: var(--gm-accent, #ff3d71);
+}
+.gm-reveal__player svg { width: 100%; max-width: 360px; height: auto; }
+.gm-reveal__player-caption {
+  margin: 0;
+  font-size: clamp(1.25rem, 2.4vw, 1.9rem);
+  font-weight: 900;
+  text-align: center;
+  letter-spacing: -0.01em;
+}
+
+
+/* =========================================================================
+   REVEAL — one wide card
+   -------------------------------------------------------------------------
+   Just a normal card, given the full width of the panel instead of a narrow
+   reading measure. Wider lines mean fewer lines, which is what makes the
+   write-up fit without splitting it into columns or shrinking the type.
+   ========================================================================= */
+
+.gm-panel--reveal { align-items: stretch; }
+
+.gm-reveal__stage { grid-template-columns: minmax(0, 1fr); width: 100%; }
+
+.gm-panel--reveal .gm-reveal__card,
+.gm-panel--reveal .proj-card {
+  max-width: none;
+  width: 100%;
+}
+
+.gm-panel--reveal .proj-card__body p,
+.gm-panel--reveal .proj-card__points li,
+.gm-panel--reveal .proj-card__blurb {
+  max-width: none;
+}
+
+/* Comfortable but compact: the panel is a screen, not a document. */
+.gm-panel--reveal .proj-card__name { font-size: clamp(1.4rem, 2.2vw, 1.9rem); }
+.gm-panel--reveal .proj-card__body p,
+.gm-panel--reveal .proj-card__points li {
+  font-size: clamp(1rem, 1.05vw, 1.1rem);
+  line-height: 1.6;
+}
+.gm-panel--reveal .proj-card__body p { margin-block: 0 0.65rem; }
+.gm-panel--reveal .proj-card__points { margin-block: 0.25rem 0.75rem; }
+
+/* The celebrating figure has nowhere to sit once the card takes the full
+   width, so it comes out of the reveal. It still greets the reader in the
+   hero on the written site. */
+.gm-reveal__player { display: none; }

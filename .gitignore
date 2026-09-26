@@ -1,0 +1,8 @@
+# Build output — Vercel regenerates this on every deploy.
+dist/
+
+# Local tooling
+.claude/
+.DS_Store
+*.log
+node_modules/

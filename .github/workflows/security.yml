@@ -1,0 +1,95 @@
+# Security gate. Fails the build on the checks that can be made without a
+# browser. Owned by the SECURITY agent.
+#
+# What this can and cannot do is stated plainly in SECURITY.md: it catches
+# regressions against the controls this site relies on, it is not a proof of
+# security. The browser-side confirmation (zero CSP violations in the console)
+# is a manual step recorded there.
+
+name: security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # The sanitize tests are the only executable security control in the
+      # codebase. If they fail, nothing else in this job matters.
+      - name: sanitize.js unit + adversarial tests
+        run: node --test 'test/**/*.test.js'
+
+      # Static gate: injection sinks, external origins, inline script/style,
+      # unguarded storage access, and CSP drift between the three deploy files.
+      - name: static security audit
+        run: node .github/scripts/security-audit.mjs
+
+      # No lockfile, no dependencies, no install step. The build below is a
+      # dependency-free allowlist copy into dist/, not a bundler or package
+      # install. This asserts that stays true: a dependency added here would be
+      # unreviewed third party code executing in a visitor's browser, which is
+      # the supply-chain risk this project's whole architecture exists to avoid.
+      - name: assert zero runtime dependencies
+        run: |
+          set -euo pipefail
+          if [ -d node_modules ]; then
+            echo "::error::node_modules is committed — this site ships no dependencies"
+            exit 1
+          fi
+          for manifest in package.json package-lock.json yarn.lock pnpm-lock.yaml bun.lockb; do
+            if [ -f "$manifest" ]; then
+              echo "::error::$manifest exists. This site has no dependencies."
+              echo "A dependency is third-party code running in a visitor's browser."
+              echo "If one is genuinely needed, justify it in SECURITY.md first."
+              exit 1
+            fi
+          done
+          echo "confirmed: no package manifest, no dependencies"
+
+      - name: build deployable allowlist
+        run: |
+          set -euo pipefail
+          node scripts/build-site.mjs
+          test -f dist/index.html
+          test -f dist/_headers
+          test -d dist/css
+          test -d dist/js
+          test -d dist/assets
+          test ! -e dist/.claude
+          test ! -e dist/.github
+          test ! -e dist/test
+          test ! -e dist/SECURITY.md
+          test ! -e dist/assets/pong.jpg
+          test ! -e dist/assets/uiuc.jpg
+          test ! -e dist/assets/gauresh@2x.jpg
+          echo "dist allowlist contains runtime files only"
+
+      - name: 10k static load smoke
+        run: LOAD_REQUESTS=10000 LOAD_CONCURRENCY=200 node scripts/load-smoke.mjs
+
+      # The deployment files ARE the security policy. A malformed one silently
+      # serves the site with no headers at all, which is the worst outcome
+      # because it looks fine.
+      - name: validate deployment manifests parse
+        run: |
+          set -euo pipefail
+          node -e "JSON.parse(require('fs').readFileSync('vercel.json','utf8')); console.log('vercel.json: valid JSON')"
+          test -f netlify.toml    || { echo "::error::netlify.toml missing"; exit 1; }
+          test -f public/_headers || { echo "::error::public/_headers missing"; exit 1; }
+          grep -q "Content-Security-Policy" netlify.toml
+          grep -q "Content-Security-Policy" public/_headers
+          echo "deployment manifests present and carry a CSP"

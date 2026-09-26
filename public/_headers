@@ -1,0 +1,40 @@
+# Netlify / Cloudflare Pages header rules.
+#
+# PLACEMENT: both platforms read `_headers` from the ROOT OF THE PUBLISH
+# DIRECTORY, not from a folder named `public`. This repo serves from its root,
+# so this file must be copied to the publish root at deploy time:
+#
+#     cp public/_headers ./_headers
+#
+# netlify.toml already does this via its build command. For Cloudflare Pages,
+# set the build command to that copy (or set the output directory to one that
+# contains it). ci/security checks assert the policy here matches the other
+# two deployment files — three copies of a security policy that drift apart is
+# the failure mode this guards against.
+#
+# Every directive is justified in SECURITY.md. Nothing here is cargo-culted.
+
+/*
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; require-trusted-types-for 'script'; trusted-types 'none'; upgrade-insecure-requests
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Permissions-Policy: accelerometer=(), ambient-light-sensor=(), attribution-reporting=(), autoplay=(), bluetooth=(), browsing-topics=(), camera=(), display-capture=(), encrypted-media=(), fullscreen=(self), gamepad=(), geolocation=(), gyroscope=(), hid=(), identity-credentials-get=(), idle-detection=(), interest-cohort=(), local-fonts=(), magnetometer=(), microphone=(), midi=(), otp-credentials=(), payment=(), picture-in-picture=(), publickey-credentials-create=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), storage-access=(), usb=(), window-management=(), xr-spatial-tracking=()
+  X-Frame-Options: DENY
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
+  X-XSS-Protection: 0
+
+# HTML is revalidated on every visit so a security fix is never pinned behind a
+# stale cache. The build is an allowlist copy, not a content-hashing bundler, so
+# static assets revalidate too rather than being marked immutable.
+/
+  Cache-Control: no-cache
+/*.html
+  Cache-Control: no-cache
+/*.css
+  Cache-Control: public, max-age=3600, must-revalidate
+/*.js
+  Cache-Control: public, max-age=3600, must-revalidate
+/assets/*
+  Cache-Control: public, max-age=86400, must-revalidate
