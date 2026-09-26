@@ -76,8 +76,13 @@ function buildHero(person) {
     'data-portrait': 'photo',
   });
 
+  // The desktop hero's Email link points at #contact. This page has no contact
+  // section, so that link would go nowhere — it is dropped here and the
+  // addresses are rendered directly instead, each one a live mailto.
   const links = (Array.isArray(person.links) ? person.links : [])
     .map((link) => {
+      const raw = t(link && link.href);
+      if (raw.startsWith('#')) return null;
       const href = safeHref(link && link.href);
       const label = t(link && link.label);
       if (!href || !label) return null;
@@ -88,6 +93,20 @@ function buildHero(person) {
           rel: href.startsWith('http') ? 'noopener noreferrer' : null,
           text: label,
         }),
+      ]);
+    })
+    .filter(Boolean);
+
+  const emails = (Array.isArray(person.emails) ? person.emails : [])
+    .map((row) => {
+      const address = t(row && row.address);
+      const href = safeHref(address ? `mailto:${address}` : null);
+      if (!href) return null;
+      return el('li', null, [
+        el('a', { class: 'm-mail', href }, [
+          el('span', { class: 'm-mail__kind', text: t(row.label) }),
+          el('span', { class: 'm-mail__addr', text: address }),
+        ]),
       ]);
     })
     .filter(Boolean);
@@ -103,6 +122,7 @@ function buildHero(person) {
     ]),
     el('p', { class: 'm-hero__tagline', text: t(person.tagline) }),
     links.length ? el('ul', { class: 'm-hero__links' }, links) : null,
+    emails.length ? el('ul', { class: 'm-mails' }, emails) : null,
   ]);
 }
 

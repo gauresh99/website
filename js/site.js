@@ -206,10 +206,24 @@ function buildHero(person) {
  * @param {string} linkClass  'link-pill' (block of actions) or 'link-plain'
  *                            (a line of text links, used under the portrait)
  */
+/**
+ * Same-page anchor, or ''.
+ *
+ * safeHref deliberately permits only http(s) and mailto, and that is the right
+ * contract for anything that could leave the page — so rather than widen it, a
+ * fragment is validated here against its own narrow pattern. A fragment cannot
+ * navigate anywhere or carry a scheme, and restricting it to the id alphabet
+ * means it cannot smuggle one either.
+ */
+function safeFragment(value) {
+  const raw = typeof value === 'string' ? value : '';
+  return /^#[A-Za-z][A-Za-z0-9_-]*$/.test(raw) ? raw : '';
+}
+
 function buildLinks(links, className, linkClass = 'link-pill') {
   const items = (Array.isArray(links) ? links : [])
     .map((link) => {
-      const href = safeHref(link && link.href);
+      const href = safeHref(link && link.href) || safeFragment(link && link.href);
       const label = t(link && link.label);
       if (!href || !label) return null;
       const kind = t(link && link.kind).toLowerCase();
@@ -467,6 +481,32 @@ function buildProjects(projects) {
   ]);
 }
 
+/**
+ * Every address, in full, each one a live mailto.
+ *
+ * The addresses are shown rather than hidden behind a word: a reader deciding
+ * which inbox to use needs to see them, and someone who would rather copy an
+ * address than launch a mail client can.
+ */
+function buildEmailList(person) {
+  const rows = Array.isArray(person.emails) ? person.emails : [];
+  if (!rows.length) return null;
+
+  const items = rows.map((row) => {
+    const address = t(row && row.address);
+    const href = safeHref(address ? `mailto:${address}` : null);
+    if (!href) return null;
+    return el('li', null, [
+      el('a', { class: 'contact__email-row', href }, [
+        el('span', { class: 'contact__email-kind', text: t(row.label) }),
+        el('span', { class: 'contact__email-addr', text: address }),
+      ]),
+    ]);
+  }).filter(Boolean);
+
+  return items.length ? el('ul', { class: 'contact__emails' }, items) : null;
+}
+
 function buildContact(person) {
   const email = t(person.email);
   const mailto = safeHref(email ? `mailto:${email}` : null);
@@ -481,7 +521,7 @@ function buildContact(person) {
         ]),
         el('h2', { class: 'contact__title', id: 'contact-title', text: 'Get in touch' }),
         el('p', { class: 'contact__note', text: 'Email is the fastest way to reach me.' }),
-        mailto ? el('a', { class: 'contact__email', href: mailto, text: email }) : null,
+        buildEmailList(person) || (mailto ? el('a', { class: 'contact__email', href: mailto, text: email }) : null),
         buildLinks(person.links, 'contact__links'),
         location ? el('p', { class: 'contact__meta', text: location }) : null,
       ]),

@@ -9,13 +9,19 @@ export const CONTENT = Object.freeze({
     tagline: 'Experienced in Embedded Systems / Firmware and AI / ML',
     location: 'Champaign, Illinois',
     email: 'gaureshmaheshwary@gmail.com',
+    /* Shown in full on the Contact section; each opens a draft. */
+    emails: [
+      { label: 'Personal', address: 'gaureshmaheshwary@gmail.com' },
+      { label: 'University', address: 'gauresh2@illinois.edu' },
+    ],
     links: [
       { label: 'GitHub', href: 'https://github.com/gauresh99', kind: 'github' },
       { label: 'LinkedIn', href: 'https://linkedin.com/in/gauresh-maheshwary19', kind: 'linkedin' },
-      // Both are email. "UIUC" on its own read as a university link rather
-      // than an address, so each label says which inbox it opens.
-      { label: 'Gmail', href: 'mailto:gaureshmaheshwary@gmail.com', kind: 'email' },
-      { label: 'UIUC email', href: 'mailto:gauresh2@illinois.edu', kind: 'email' },
+      // One "Email" link in the hero, pointing at the Contact section rather
+      // than opening a mail client. Two addresses side by side in a nav row
+      // made the reader pick an inbox before they knew why; Contact shows both
+      // with their full addresses, and each is still one tap from a draft.
+      { label: 'Email', href: '#contact', kind: 'email' },
     ],
   },
 

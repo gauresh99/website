@@ -237,7 +237,7 @@ body[data-sheet="open"] { overflow: hidden; }
 
 /* Nothing may push the page sideways on a phone. */
 @media (max-width: 720px) {
-  html, body { overflow-x: hidden; max-width: 100%; }
+  html, body { overflow-x: clip; max-width: 100%; }
 }
 
 /* The shootout does not run on phones, so the switch that offers it is hidden
@@ -302,3 +302,16 @@ body[data-sheet="open"] { overflow: hidden; }
 .m-reveal__body { padding: 0 0.95rem 0.95rem; }
 .m-reveal__body p { margin: 0 0 0.8rem; font-size: 0.97rem; line-height: 1.68; color: var(--ink); }
 .m-reveal__body p:last-child { margin-bottom: 0; }
+
+/* Addresses in the phone hero, since this page has no contact section. */
+.m-mails { list-style: none; margin: 0.7rem 0 0; padding: 0; display: grid; gap: 0.45rem; }
+.m-mail {
+  display: grid; gap: 0.1rem; min-height: 52px; padding: 0.6rem 0.85rem;
+  border: 1px solid var(--rule); border-radius: 12px; text-decoration: none;
+  background: color-mix(in srgb, var(--gold-wash) 45%, transparent);
+}
+.m-mail__kind {
+  font-size: 0.7rem; font-weight: 800; letter-spacing: 0.05em;
+  text-transform: uppercase; color: var(--gold);
+}
+.m-mail__addr { font-size: 0.95rem; color: var(--ink); word-break: break-word; }

@@ -832,21 +832,6 @@
 
 /* The email is the point of the section, so it is the largest thing in it and
    it is underlined like the link it is. */
-.contact__email {
-  display: inline-block;
-  margin-top: var(--sp-7);
-  font-family: var(--font-body);
-  font-size: var(--step-2);
-  font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-normal);
-  color: var(--brand-ink);
-  text-decoration-line: underline;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 0.2em;
-  text-decoration-color: color-mix(in oklab, currentColor 35%, transparent);
-  overflow-wrap: anywhere;
-  transition: text-decoration-color var(--dur-2) var(--ease-out);
-}
 .contact__email:hover { text-decoration-color: currentColor; }
 
 .contact__links {
@@ -1696,15 +1681,17 @@ html[data-mode="site"] .hero__player-art svg { width: clamp(90px, 9vw, 130px); h
 }
 
 
-
-/* Nothing anywhere may push the page sideways. A phone that scrolls
-   horizontally feels broken even when every element is individually fine. */
-html[data-mode="site"] body { overflow-x: hidden; }
+/* overflow-x must be `clip`, never `hidden`.
+   `hidden` makes the element a scroll container. On <body> that container is
+   exactly as tall as its content, so it cannot scroll — and because it is the
+   nearest scrollable ancestor, every scrollIntoView and every #fragment link
+   resolves to it and silently does nothing. `clip` crops the same overflow
+   without creating a scroll container, so anchors keep working. */
+html[data-mode="site"] body { overflow-x: clip; }
 html[data-mode="site"] .wrap,
 html[data-mode="site"] .proj-card,
 html[data-mode="site"] .stop,
 html[data-mode="site"] .about__split { min-width: 0; }
-
 
 
 /* The full-width pass sets a two-column About unconditionally, and because it
@@ -1713,7 +1700,6 @@ html[data-mode="site"] .about__split { min-width: 0; }
 @media (max-width: 860px) {
   html[data-mode="site"] .about__split { grid-template-columns: minmax(0, 1fr); }
 }
-
 
 
 /* =========================================================================
@@ -1731,3 +1717,12 @@ html[data-mode="site"] .proj-card__more-toggle {
 html[data-mode="site"] .proj-card__more-toggle::-webkit-details-marker { display: none; }
 
 
+/* Contact: every address in full, each a live mailto. */
+html[data-mode="site"] .contact__emails {
+  list-style: none; margin: 0.5rem 0 1.25rem; padding: 0;
+  display: flex; flex-wrap: wrap; gap: 0.6rem;
+}
+html[data-mode="site"] .contact__email-row:hover { border-color: var(--gold); }
+html[data-mode="site"] .contact__email-addr {
+  font-size: 1.02rem; color: var(--ink); word-break: break-word;
+}
