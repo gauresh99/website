@@ -8,12 +8,11 @@ export const CONTENT = Object.freeze({
     role: 'Senior in Computer Engineering at UIUC',
     tagline: 'Experienced in Embedded Systems / Firmware and AI / ML',
     location: 'Champaign, Illinois',
-    email: 'gauresh2@illinois.edu',
+    email: 'gaureshmaheshwary@gmail.com',
     links: [
       { label: 'GitHub', href: 'https://github.com/gauresh99', kind: 'github' },
       { label: 'LinkedIn', href: 'https://linkedin.com/in/gauresh-maheshwary19', kind: 'linkedin' },
-      { label: 'Email', href: 'mailto:gauresh2@illinois.edu', kind: 'email' },
-      { label: 'Gmail', href: 'mailto:gaureshmaheshwary@gmail.com', kind: 'email' },
+      { label: 'Email', href: 'mailto:gaureshmaheshwary@gmail.com', kind: 'email' },
     ],
   },
 
