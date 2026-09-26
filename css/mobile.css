@@ -1,0 +1,304 @@
+/* =========================================================================
+   mobile.css — styles for the phone renderer (js/site-mobile.js)
+   -------------------------------------------------------------------------
+   Only ever applies inside [data-view="mobile"], so it cannot reach the
+   desktop tree even if both are somehow in the document at once. Colours come
+   from the shared tokens, so light/dark and the gold branches are inherited
+   rather than redefined.
+   ========================================================================= */
+
+[data-view="mobile"] {
+  --m-pad: 1rem;
+  padding-bottom: 2rem;
+}
+
+[data-view="mobile"] * { min-width: 0; }
+
+/* --- hero ---------------------------------------------------------------- */
+
+.m-hero { padding: 1rem var(--m-pad) 0.5rem; }
+.m-hero__row { display: flex; gap: 0.9rem; align-items: center; }
+.m-hero__frame {
+  flex: 0 0 auto;
+  width: 96px; aspect-ratio: 3 / 4;
+  border-radius: 12px; overflow: hidden;
+  border: 1px solid var(--rule);
+  background: var(--gold-wash);
+}
+.m-hero__photo { width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; display: block; }
+.m-hero__id { min-width: 0; }
+.m-hero__name { margin: 0 0 0.2rem; font-size: 1.45rem; line-height: 1.1; color: var(--ink); }
+.m-hero__role { margin: 0; font-size: 0.92rem; font-weight: 650; color: var(--ink); }
+.m-hero__loc  { margin: 0.1rem 0 0; font-size: 0.85rem; color: var(--ink-faint); }
+.m-hero__tagline { margin: 0.75rem 0 0; font-size: 0.95rem; color: var(--ink-soft); line-height: 1.5; }
+
+.m-hero__links {
+  display: flex; flex-wrap: wrap; gap: 0.4rem 1rem;
+  list-style: none; margin: 0.7rem 0 0; padding: 0;
+}
+.m-hero__link {
+  display: inline-flex; align-items: center; min-height: 36px;
+  color: var(--gold); text-decoration: none; font-size: 0.92rem; font-weight: 650;
+  border-bottom: 1px solid var(--gold-wash);
+}
+
+/* --- player widget ------------------------------------------------------- */
+
+.m-player {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+  margin: 0.9rem 0 0; padding: 0.6rem 0.9rem;
+  border: 1px solid var(--rule); border-radius: 14px;
+  background: color-mix(in srgb, var(--gold-wash) 55%, transparent);
+  --player-kit: var(--gold); color: var(--ink);
+}
+.m-player .hero__player-hello { display: block; font-size: 0.78rem; color: var(--ink-faint); }
+.m-player .hero__player-name  { display: block; font-size: 1.05rem; font-weight: 800; color: var(--gold); }
+.m-player .hero__player-greet { margin: 0; }
+.m-player .hero__player-art svg { width: 62px; height: auto; display: block; }
+
+/* --- tabs: the navigation model ------------------------------------------ */
+
+.m-tabs {
+  position: sticky; top: 0; z-index: 6;
+  display: flex; gap: 0.25rem;
+  margin-top: 0.9rem; padding: 0.4rem var(--m-pad);
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  backdrop-filter: blur(8px);
+  border-block: 1px solid var(--rule);
+  overflow-x: auto; scrollbar-width: none;
+  overscroll-behavior-inline: contain;
+}
+.m-tabs::-webkit-scrollbar { display: none; }
+.m-tab {
+  flex: 1 0 auto;
+  min-height: 44px; padding: 0 0.95rem;
+  border: 0; border-radius: 999px;
+  background: none; color: var(--ink-faint);
+  font: inherit; font-size: 0.95rem; font-weight: 700;
+  cursor: pointer; white-space: nowrap;
+}
+.m-tab[aria-selected="true"] { background: var(--gold-wash); color: var(--ink); }
+.m-tab:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+
+.m-panel { padding: 1.1rem var(--m-pad) 0; }
+
+/* --- prose --------------------------------------------------------------- */
+
+.m-h2 { margin: 0 0 0.6rem; font-size: 1.5rem; line-height: 1.15; color: var(--ink); }
+.m-h3 { margin: 0 0 0.5rem; font-size: 1.15rem; color: var(--gold); }
+.m-note { margin: 0 0 1rem; font-size: 0.9rem; color: var(--ink-faint); line-height: 1.5; }
+.m-lede { margin: 0 0 0.9rem; font-size: 1.08rem; line-height: 1.55; color: var(--ink-soft); }
+.m-prose p { margin: 0 0 0.9rem; font-size: 1rem; line-height: 1.68; color: var(--ink); }
+
+.m-aside {
+  margin-top: 1.25rem; padding: 1rem;
+  border: 1px solid hsl(132 38% 45% / 0.28); border-radius: 14px;
+  background: hsl(132 38% 45% / 0.08);
+}
+.m-aside__lead { font-size: 0.95rem; color: var(--ink-soft); }
+.m-cta {
+  display: inline-flex; align-items: center; min-height: 44px;
+  margin-top: 0.5rem; padding: 0 1.15rem; border-radius: 999px;
+  background: var(--gold); color: #1a1408;
+  font-weight: 800; text-decoration: none;
+}
+.m-cta--quiet { background: none; border: 1px solid var(--gold); color: var(--gold); }
+
+/* --- journey ------------------------------------------------------------- */
+
+.m-stops { display: grid; gap: 0.5rem; }
+.m-stop {
+  border: 1px solid var(--rule); border-radius: 14px;
+  background: color-mix(in srgb, var(--paper-raised) 85%, transparent);
+  overflow: hidden;
+}
+.m-stop__head {
+  display: grid; gap: 0.1rem;
+  padding: 0.85rem 2.2rem 0.85rem 0.9rem;
+  min-height: 44px; cursor: pointer; list-style: none; position: relative;
+}
+.m-stop__head::-webkit-details-marker { display: none; }
+.m-stop__head::after {
+  content: ""; position: absolute; right: 1rem; top: 1.25rem;
+  width: 0.45rem; height: 0.45rem;
+  border-right: 2px solid var(--gold); border-bottom: 2px solid var(--gold);
+  transform: rotate(45deg);
+}
+.m-stop[open] .m-stop__head::after { transform: rotate(-135deg); }
+.m-stop__date { font-size: 0.75rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--gold); }
+.m-stop__title { font-size: 1.05rem; font-weight: 800; color: var(--ink); }
+.m-stop__org { font-size: 0.85rem; color: var(--ink-faint); }
+.m-stop__body { padding: 0 0.9rem 0.9rem; }
+.m-stop__body p { margin: 0; font-size: 0.97rem; line-height: 1.6; color: var(--ink-soft); }
+.m-stop__img {
+  width: 100%; max-height: 190px; object-fit: cover;
+  border-radius: 10px; margin-bottom: 0.7rem; display: block;
+}
+.m-stop__jump {
+  margin-top: 0.7rem; min-height: 44px; padding: 0 1rem;
+  border: 1px solid var(--gold); border-radius: 999px;
+  background: none; color: var(--gold); font: inherit; font-weight: 700; cursor: pointer;
+}
+
+/* --- project rows -------------------------------------------------------- */
+
+.m-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.m-row {
+  width: 100%; display: flex; align-items: center; gap: 0.8rem;
+  min-height: 64px; padding: 0.7rem 0.9rem; text-align: left;
+  border: 1px solid var(--rule); border-radius: 14px;
+  background: color-mix(in srgb, var(--paper-raised) 85%, transparent);
+  color: var(--ink); font: inherit; cursor: pointer;
+}
+.m-row__art { flex: 0 0 auto; color: var(--gold); }
+.m-row__art svg { width: 44px; height: auto; display: block; }
+.m-row__text { display: grid; gap: 0.1rem; min-width: 0; flex: 1 1 auto; }
+.m-row__num { font-size: 0.72rem; font-weight: 800; color: var(--gold); }
+.m-row__name { font-size: 1.05rem; font-weight: 800; }
+.m-row__tech { font-size: 0.82rem; color: var(--ink-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.m-row__chev {
+  flex: 0 0 auto; width: 0.5rem; height: 0.5rem;
+  border-right: 2px solid var(--gold); border-bottom: 2px solid var(--gold);
+  transform: rotate(-45deg);
+}
+
+/* --- project sheet ------------------------------------------------------- */
+
+.m-sheet-host { position: fixed; inset: 0; z-index: 20; background: var(--paper); overflow-y: auto; }
+body[data-sheet="open"] { overflow: hidden; }
+.m-sheet__bar {
+  position: sticky; top: 0;
+  padding: 0.5rem var(--m-pad);
+  background: color-mix(in srgb, var(--paper) 94%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--rule);
+}
+.m-sheet__back {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  min-height: 44px; padding: 0 0.5rem;
+  border: 0; background: none; color: var(--gold);
+  font: inherit; font-size: 1rem; font-weight: 700; cursor: pointer;
+}
+.m-sheet__back-arrow {
+  width: 0.5rem; height: 0.5rem;
+  border-left: 2px solid var(--gold); border-bottom: 2px solid var(--gold);
+  transform: rotate(45deg);
+}
+.m-sheet__body { padding: 1rem var(--m-pad) 3rem; }
+.m-sheet__num { margin: 0 0 0.2rem; font-size: 0.78rem; font-weight: 800; color: var(--gold); }
+.m-sheet__body p { margin: 0 0 0.9rem; font-size: 1rem; line-height: 1.68; color: var(--ink); }
+.m-sheet__points { margin: 0 0 1rem; padding-left: 1.15rem; display: grid; gap: 0.45rem; }
+.m-sheet__points li { font-size: 0.97rem; line-height: 1.55; }
+.m-sheet__points li::marker { color: var(--gold); }
+
+.m-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; list-style: none; margin: 0 0 1.1rem; padding: 0; }
+.m-chip {
+  display: inline-block; padding: 0.22rem 0.55rem;
+  border: 1px solid var(--rule); border-radius: 999px;
+  font-size: 0.78rem; color: var(--ink-soft);
+}
+
+/* --- contact ------------------------------------------------------------- */
+
+.m-contact { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.m-contact__link {
+  display: grid; gap: 0.1rem; min-height: 56px; padding: 0.7rem 0.9rem;
+  border: 1px solid var(--rule); border-radius: 14px; text-decoration: none;
+  background: color-mix(in srgb, var(--paper-raised) 85%, transparent);
+}
+.m-contact__label { font-size: 0.78rem; font-weight: 800; color: var(--gold); }
+.m-contact__value { font-size: 0.95rem; color: var(--ink); word-break: break-word; }
+
+/* =========================================================================
+   SHARED HEADER ON SMALL SCREENS
+   The header lives in index.html, outside #app-root, so both renderers use
+   it and it cannot be scoped to [data-view="mobile"]. These rules moved here
+   from site.css when the phone patches were deleted from that file — the
+   header still needs them, because the header is shared and the structure is
+   not.
+   ========================================================================= */
+
+@media (max-width: 720px) {
+  .site-header__inner {
+    flex-wrap: wrap;
+    gap: 0.45rem 0.6rem;
+    padding: 0.5rem 0.85rem;
+  }
+  /* The mark still identifies the page; the full name is redundant next to a
+     heading that says it three lines later. */
+  .wordmark__text { display: none; }
+  .mode-cue { display: none; }
+
+  .theme-toggle { padding: 3px; }
+  .theme-toggle__opt { font-size: 0.88rem; padding: 0 0.8rem; min-height: 40px; }
+  .mode-toggle { font-size: 0.88rem; }
+  .mode-toggle__opt { padding: 0 0.7rem; min-height: 40px; }
+}
+
+/* Nothing may push the page sideways on a phone. */
+@media (max-width: 720px) {
+  html, body { overflow-x: hidden; max-width: 100%; }
+}
+
+/* The shootout does not run on phones, so the switch that offers it is hidden
+   rather than left as a control that does nothing. */
+@media (max-width: 720px) {
+  .mode-switch { display: none; }
+}
+
+/* --- project cards ------------------------------------------------------- */
+
+.m-body { padding: 0 var(--m-pad); }
+.m-section { padding-block: 1.4rem; }
+.m-section + .m-section { border-top: 1px solid var(--rule); }
+
+.m-cards { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+.m-card {
+  width: 100%; display: grid; gap: 0.55rem; text-align: left;
+  padding: 0.9rem; border: 1px solid var(--rule); border-radius: 16px;
+  background: color-mix(in srgb, var(--paper-raised) 88%, transparent);
+  color: var(--ink); font: inherit; cursor: pointer;
+}
+.m-card__head { display: flex; align-items: center; gap: 0.65rem; }
+.m-card__art { flex: 0 0 auto; color: var(--gold); }
+.m-card__art svg { width: 38px; height: auto; display: block; }
+.m-card__title { flex: 1 1 auto; font-size: 1.1rem; font-weight: 800; line-height: 1.2; }
+.m-card__chev {
+  flex: 0 0 auto; width: 0.5rem; height: 0.5rem;
+  border-right: 2px solid var(--gold); border-bottom: 2px solid var(--gold);
+  transform: rotate(-45deg);
+}
+/* Four lines, clamped for display only: the text stays whole in the DOM so
+   find-in-page and screen readers still get all of it. */
+.m-card__summary {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4;
+  overflow: hidden;
+  font-size: 0.95rem; line-height: 1.55; color: var(--ink-soft);
+}
+.m-card__skills { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+
+/* --- the "outside engineering" dropdown ---------------------------------- */
+
+.m-reveal {
+  margin-top: 1.25rem;
+  border: 1px solid hsl(132 38% 45% / 0.3); border-radius: 14px;
+  background: hsl(132 38% 45% / 0.08);
+  overflow: hidden;
+}
+.m-reveal__q {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+  min-height: 52px; padding: 0.75rem 0.95rem;
+  cursor: pointer; list-style: none;
+  font-weight: 750; color: var(--ink);
+}
+.m-reveal__q::-webkit-details-marker { display: none; }
+.m-reveal__q::after {
+  content: ""; flex: 0 0 auto;
+  width: 0.5rem; height: 0.5rem;
+  border-right: 2px solid hsl(132 38% 42%); border-bottom: 2px solid hsl(132 38% 42%);
+  transform: rotate(45deg);
+}
+.m-reveal[open] .m-reveal__q::after { transform: rotate(-135deg); }
+.m-reveal__body { padding: 0 0.95rem 0.95rem; }
+.m-reveal__body p { margin: 0 0 0.8rem; font-size: 0.97rem; line-height: 1.68; color: var(--ink); }
+.m-reveal__body p:last-child { margin-bottom: 0; }

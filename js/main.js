@@ -8,7 +8,33 @@
  */
 
 import { CONTENT } from './content.js';
-import { mountSite, startPlayerNumber } from './site.js';
+import { startPlayerNumber } from './site.js';
+
+/**
+ * Two renderers, one content source.
+ *
+ * The phone gets a different structure, not a reflow of the desktop one: one
+ * section on screen at a time, projects as rows that open a full-screen sheet.
+ * A single scrolling column is the wrong shape for 375px, and CSS can resize a
+ * structure but cannot replace one.
+ *
+ * Both are loaded on demand so a phone never downloads the desktop renderer and
+ * vice versa, and both read js/content.js — there is exactly one copy of the
+ * words, so the two can never disagree about what they say.
+ */
+const PHONE = '(max-width: 720px)';
+function isPhone() {
+  return window.matchMedia ? window.matchMedia(PHONE).matches : false;
+}
+
+let sitePromise = null;
+let siteFor = null;
+function loadSite(phone) {
+  if (sitePromise && siteFor === phone) return sitePromise;
+  siteFor = phone;
+  sitePromise = phone ? import('./site-mobile.js') : import('./site.js');
+  return sitePromise;
+}
 
 /**
  * The game is loaded on demand, never at startup, for three reasons that all
@@ -81,6 +107,12 @@ function modeFromHash() {
 }
 
 function resolveInitialMode() {
+  // The shootout is a pointer-and-keyboard game built around aiming. On a
+  // phone it would be worse than not shipping it, and the written page carries
+  // every fact the game reveals — so phones get the written page, full stop,
+  // even if a stored preference or a #shootout link says otherwise.
+  if (isPhone()) return 'site';
+
   // Explicit link wins, then whatever the visitor last chose, then the written
   // site.
   //
@@ -154,8 +186,16 @@ function setMode(mode, { announceChange = true } = {}) {
       announce('The shootout could not load, so here is the written version.');
     });
   } else {
-    active = mountSite(root, CONTENT);
-    if (announceChange) announce('Standard mode.');
+    const token = ++mountToken;
+    const phone = isPhone();
+    loadSite(phone).then(({ mountSite }) => {
+      if (token !== mountToken || currentMode !== 'site') return;
+      active = mountSite(root, CONTENT);
+      startPlayerNumber();
+      if (announceChange) announce('Standard mode.');
+    }).catch((error) => {
+      console.error('site failed to load', error);
+    });
   }
 }
 
@@ -213,10 +253,12 @@ function init() {
   setMode(resolveInitialMode(), { announceChange: false });
 
   document.getElementById(ids.toggle)?.addEventListener('click', () => {
+    if (isPhone()) return;
     setMode(currentMode === 'shootout' ? 'site' : 'shootout');
   });
 
   window.addEventListener('hashchange', () => {
+    if (isPhone()) return;
     const mode = modeFromHash();
     if (mode) setMode(mode);
   });
@@ -227,12 +269,13 @@ function init() {
     if (event.key === 'Escape' && currentMode === 'shootout') setMode('site');
   });
 
-  // Header chrome, not view content: the widget lives outside #app-root and
-  // survives every mode change, so it starts once here rather than inside a
-  // mount. Starting it from mountSite meant it never appeared at all for the
-  // visitors who land on the shootout, which is now everyone by default.
   initTheme();
-  startPlayerNumber();
+
+  // startPlayerNumber() is deliberately NOT called here. It used to be, and it
+  // silently broke the widget: the renderer mounts asynchronously, so this ran
+  // while #app-root was still empty, found no slot, and tripped its own
+  // run-once guard — which made the real call after mount a no-op. It now runs
+  // from inside the site mount, where the slot is guaranteed to exist.
 
   document.documentElement.dataset.ready = 'true';
 }
