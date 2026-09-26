@@ -103,10 +103,7 @@ function buildHero(person) {
       const href = safeHref(address ? `mailto:${address}` : null);
       if (!href) return null;
       return el('li', null, [
-        el('a', { class: 'm-mail', href }, [
-          el('span', { class: 'm-mail__kind', text: t(row.label) }),
-          el('span', { class: 'm-mail__addr', text: address }),
-        ]),
+        el('a', { class: 'm-mail', href, text: address }),
       ]);
     })
     .filter(Boolean);

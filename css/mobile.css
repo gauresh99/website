@@ -304,14 +304,10 @@ body[data-sheet="open"] { overflow: hidden; }
 .m-reveal__body p:last-child { margin-bottom: 0; }
 
 /* Addresses in the phone hero, since this page has no contact section. */
-.m-mails { list-style: none; margin: 0.7rem 0 0; padding: 0; display: grid; gap: 0.45rem; }
+.m-mails { list-style: none; margin: 0.6rem 0 0; padding: 0; display: grid; gap: 0.25rem; justify-items: start; }
 .m-mail {
-  display: grid; gap: 0.1rem; min-height: 52px; padding: 0.6rem 0.85rem;
-  border: 1px solid var(--rule); border-radius: 12px; text-decoration: none;
-  background: color-mix(in srgb, var(--gold-wash) 45%, transparent);
+  display: inline-block; min-height: 32px;
+  font-size: 1rem; font-weight: 650; color: var(--gold);
+  text-decoration: none; border-bottom: 1px solid var(--gold-wash);
+  word-break: break-word;
 }
-.m-mail__kind {
-  font-size: 0.7rem; font-weight: 800; letter-spacing: 0.05em;
-  text-transform: uppercase; color: var(--gold);
-}
-.m-mail__addr { font-size: 0.95rem; color: var(--ink); word-break: break-word; }

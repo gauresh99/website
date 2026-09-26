@@ -1717,12 +1717,19 @@ html[data-mode="site"] .proj-card__more-toggle {
 html[data-mode="site"] .proj-card__more-toggle::-webkit-details-marker { display: none; }
 
 
-/* Contact: every address in full, each a live mailto. */
+/* Contact: the addresses, stacked, at the size the single one used to be. */
 html[data-mode="site"] .contact__emails {
-  list-style: none; margin: 0.5rem 0 1.25rem; padding: 0;
-  display: flex; flex-wrap: wrap; gap: 0.6rem;
+  list-style: none; margin: 0.4rem 0 1.25rem; padding: 0;
+  display: grid; gap: 0.3rem; justify-items: start;
 }
-html[data-mode="site"] .contact__email-row:hover { border-color: var(--gold); }
-html[data-mode="site"] .contact__email-addr {
-  font-size: 1.02rem; color: var(--ink); word-break: break-word;
+html[data-mode="site"] .contact__email {
+  display: inline-block;
+  font-size: clamp(1.15rem, 1.9vw, 1.6rem);
+  font-weight: 700;
+  color: var(--gold);
+  text-decoration: none;
+  border-bottom: 2px solid var(--gold-wash);
+  padding-bottom: 2px;
+  word-break: break-word;
 }
+html[data-mode="site"] .contact__email:hover { border-bottom-color: var(--gold); }

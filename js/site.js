@@ -496,11 +496,10 @@ function buildEmailList(person) {
     const address = t(row && row.address);
     const href = safeHref(address ? `mailto:${address}` : null);
     if (!href) return null;
+    // The address is the label. "Personal" and "University" told the reader
+    // nothing they could not infer from the domain, and cost a line each.
     return el('li', null, [
-      el('a', { class: 'contact__email-row', href }, [
-        el('span', { class: 'contact__email-kind', text: t(row.label) }),
-        el('span', { class: 'contact__email-addr', text: address }),
-      ]),
+      el('a', { class: 'contact__email', href, text: address }),
     ]);
   }).filter(Boolean);
 
