@@ -6,3 +6,10 @@ dist/
 .DS_Store
 *.log
 node_modules/
+
+# Internal working notes — kept locally, never published.
+# CONTENT-BRIEF.md records the resume audit, including claims that were
+# corrected and an unresolved NDA question. It is the source of truth for the
+# copy, and exactly the wrong thing to host under your own name.
+CONTENT-BRIEF.md
+CONTRACT.md
