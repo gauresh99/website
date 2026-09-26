@@ -405,14 +405,28 @@ function buildProjectCard(project, index) {
     ]),
     // No blurb and no highlight callout: every word on this card is copy the
     // owner wrote for it. Anything summarising on his behalf came out.
-    body.length
-      ? el('div', { class: 'proj-card__body' }, body.map((para) => el('p', { text: para })))
-      : null,
+    // The long half of the card lives in a <details>. On a phone it starts
+    // closed, which is what takes the projects section from sixteen screens of
+    // scrolling to about four; from 721px up, site.js forces every one open so
+    // a desktop reader never has to click to read.
+    //
+    // Native <details> rather than a div and a click handler: it gets keyboard
+    // operability, the right expanded/collapsed state for assistive tech, and
+    // find-in-page expansion for free, and all three are easy to get wrong.
     (() => {
       const points = list(project.points);
-      return points.length
-        ? el('ul', { class: 'proj-card__points' }, points.map((line) => el('li', { text: line })))
-        : null;
+      if (!body.length && !points.length) return null;
+      return el('details', { class: 'proj-card__more' }, [
+        el('summary', { class: 'proj-card__more-toggle' }, [
+          el('span', { class: 'proj-card__more-label', text: 'Read more' }),
+        ]),
+        body.length
+          ? el('div', { class: 'proj-card__body' }, body.map((para) => el('p', { text: para })))
+          : null,
+        points.length
+          ? el('ul', { class: 'proj-card__points' }, points.map((line) => el('li', { text: line })))
+          : null,
+      ]);
     })(),
     chipRow(project.tech, 'chip--tech'),
     el('div', { class: 'proj-card__foot' }, [
@@ -657,6 +671,20 @@ export function mountSite(root, content) {
     } else {
       on(img, 'error', drop);
     }
+  }
+
+  // Project cards: expanded on wide screens, collapsed on phones.
+  //
+  // Driven from JS rather than CSS because `open` is an attribute, not a style,
+  // so no media query can set it. matchMedia keeps it correct when the window
+  // is resized or a tablet is rotated, instead of only at first paint.
+  const wide = window.matchMedia ? window.matchMedia('(min-width: 721px)') : null;
+  if (wide) {
+    const syncCards = () => {
+      for (const d of root.querySelectorAll('.proj-card__more')) d.open = wide.matches;
+    };
+    syncCards();
+    on(wide, 'change', syncCards);
   }
 
   // Portrait: swap the monogram out only once the photo has actually decoded.
