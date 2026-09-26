@@ -1694,3 +1694,107 @@ html[data-mode="site"] .hero__player-art svg { width: clamp(90px, 9vw, 130px); h
   74% { transform: translate(7px, -12px) rotate(90deg); }
   88% { transform: translate(2px, -3px) rotate(180deg); }
 }
+
+/* =========================================================================
+   SMALL SCREENS
+   -------------------------------------------------------------------------
+   The header carried four things — wordmark, theme switch, a prose cue and
+   the mode switch — which fits a laptop and overflows a phone. Rather than
+   shrinking all four until none of them are tappable, the two that are pure
+   affordance drop out: the wordmark's text (the mark still identifies the
+   page) and the "Fancy a penalty?" cue (the toggle already says Play).
+   ========================================================================= */
+
+@media (max-width: 720px) {
+  html[data-mode="site"] .site-header__inner {
+    flex-wrap: wrap;
+    gap: 0.5rem 0.65rem;
+    padding-inline: 0.85rem;
+  }
+  html[data-mode="site"] .wordmark__text { display: none; }
+  html[data-mode="site"] .mode-cue { display: none; }
+
+  html[data-mode="site"] .theme-toggle__opt {
+    font-size: 0.9rem;
+    padding: 0.45rem 0.8rem;
+  }
+  html[data-mode="site"] .mode-toggle { font-size: 0.9rem; }
+  html[data-mode="site"] .mode-toggle__opt { padding: 0.45rem 0.75rem; }
+
+  /* Links wrap onto a second line rather than running off the edge; the row
+     gap matters because without it wrapped rows collide. */
+  html[data-mode="site"] .hero__links--inline {
+    gap: 0.5rem 1.1rem;
+    row-gap: 0.5rem;
+  }
+
+  /* Type steps down: the desktop clamps bottom out too large for 375px. */
+  html[data-mode="site"] .hero__name { font-size: clamp(1.7rem, 8vw, 2.1rem); }
+  html[data-mode="site"] .about__greeting { font-size: clamp(1.5rem, 7vw, 1.9rem); }
+  html[data-mode="site"] .about__lede { font-size: 1.08rem; }
+  html[data-mode="site"] .about__main .prose p,
+  html[data-mode="site"] .about__aside .prose--tight p { font-size: 1rem; line-height: 1.7; }
+  html[data-mode="site"] .section__title { font-size: clamp(1.6rem, 7.5vw, 2.1rem); }
+  html[data-mode="site"] .stop__summary { font-size: 1rem; }
+  html[data-mode="site"] .stop__title { font-size: 1.15rem; }
+  html[data-mode="site"] .proj-card__name { font-size: 1.25rem; }
+
+  /* Sections breathe less; a phone screen is mostly padding otherwise. */
+  html[data-mode="site"] .section { padding-block: 1.75rem; }
+  html[data-mode="site"] .wrap { padding-inline: 1rem; }
+  html[data-mode="site"] .proj-card { padding: 1.1rem; }
+
+  /* The portrait should not eat the first screen. */
+  html[data-mode="site"] .hero__portrait { max-width: 150px; }
+  html[data-mode="site"] .hero--split { padding-top: 1.25rem; }
+}
+
+/* Nothing anywhere may push the page sideways. A phone that scrolls
+   horizontally feels broken even when every element is individually fine. */
+html[data-mode="site"] body { overflow-x: hidden; }
+html[data-mode="site"] .wrap,
+html[data-mode="site"] .proj-card,
+html[data-mode="site"] .stop,
+html[data-mode="site"] .about__split { min-width: 0; }
+
+/* The section tabs do not fit four labels across a phone, and shrinking them
+   until they do makes them hard to hit. They scroll instead — the pattern the
+   `scroll-x` class was named for — with snap points so a swipe lands on a tab
+   rather than halfway between two.
+
+   `overscroll-behavior-inline: contain` stops a horizontal swipe here from
+   turning into a browser back-gesture, which is the failure that makes this
+   pattern feel broken on iOS. */
+@media (max-width: 720px) {
+  html[data-mode="site"] .jumpnav__scroll {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    padding-inline: 0.85rem;
+    /* Room for the last tab to clear the edge when snapped. */
+    scroll-padding-inline: 0.85rem;
+  }
+  html[data-mode="site"] .jumpnav__scroll::-webkit-scrollbar { display: none; }
+  html[data-mode="site"] .jumpnav__scroll > li { scroll-snap-align: start; flex: 0 0 auto; }
+  html[data-mode="site"] .jumpnav a {
+    padding: 0.8rem 0.85rem;
+    font-size: 0.95rem;
+  }
+}
+
+/* The full-width pass sets a two-column About unconditionally, and because it
+   comes later in this file it was overriding the 860px stacking rule — leaving
+   two 146px columns on a phone. Restated here, after it, where it wins. */
+@media (max-width: 860px) {
+  html[data-mode="site"] .about__split { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Touch targets: 44px is the smallest reliably tappable size, and the tab bar
+   was sitting at 39. */
+@media (max-width: 720px) {
+  html[data-mode="site"] .jumpnav a { min-height: 44px; display: flex; align-items: center; }
+  html[data-mode="site"] .theme-toggle__opt { min-height: 44px; }
+  html[data-mode="site"] .hero__links--inline a { min-height: 32px; display: inline-flex; align-items: center; }
+}

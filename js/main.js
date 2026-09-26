@@ -81,19 +81,15 @@ function modeFromHash() {
 }
 
 function resolveInitialMode() {
-  // Explicit link wins, then whatever the visitor last chose, then the game.
+  // Explicit link wins, then whatever the visitor last chose, then the written
+  // site.
   //
-  // The shootout is the front door: it is the reason to remember this page.
-  // Two things keep that from costing anything. A returning visitor who
-  // switched to reading stays on reading, because their choice outranks the
-  // default. And the game reveals every section regardless of whether the shot
-  // goes in, with the way out to the written version always on screen — so
-  // landing here is an invitation, never a gate.
-  //
-  // Reduced motion is the exception. Someone who has asked their OS to stop
-  // animating things should not be dropped into a ball-physics simulation.
-  if (prefersReducedMotion()) return modeFromHash() ?? readStoredMode() ?? 'site';
-  return modeFromHash() ?? readStoredMode() ?? 'shootout';
+  // Reading is the front door. Someone arriving cold — a recruiter with four
+  // minutes, on a phone — gets the résumé, and the shootout is an invitation
+  // they can accept rather than a thing they have to get past. A returning
+  // visitor who chose the game keeps the game, because their choice outranks
+  // the default either way.
+  return modeFromHash() ?? readStoredMode() ?? 'site';
 }
 
 function setMode(mode, { announceChange = true } = {}) {

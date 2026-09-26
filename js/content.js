@@ -13,6 +13,7 @@ export const CONTENT = Object.freeze({
       { label: 'GitHub', href: 'https://github.com/gauresh99', kind: 'github' },
       { label: 'LinkedIn', href: 'https://linkedin.com/in/gauresh-maheshwary19', kind: 'linkedin' },
       { label: 'Email', href: 'mailto:gauresh2@illinois.edu', kind: 'email' },
+      { label: 'Gmail', href: 'mailto:gaureshmaheshwary@gmail.com', kind: 'email' },
     ],
   },
 
